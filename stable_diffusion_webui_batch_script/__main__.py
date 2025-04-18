@@ -1,10 +1,10 @@
 import asyncio
 import base64
 import csv
+import json
 import logging
 import random
 import re
-import shutil
 from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
@@ -173,8 +173,22 @@ class Config(BaseModel):
     jobs: list[ConfigJob]
 
 
-async def run_batch_from_config(config: Config, output_dir: Path) -> None:
-    for job in config.jobs:
+async def run_batch_from_config(config: Config, base_output_dir: Path) -> None:
+    for job_index, job in enumerate(config.jobs):
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + f"_{job_index:05}"
+        output_dir = base_output_dir / timestamp
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # 設定のコピーをJSON形式で作成
+        copied_config_file = output_dir / "config.json"
+        with copied_config_file.open("w", encoding="utf-8") as fp:
+            json.dump(
+                job.model_dump(),
+                fp,
+                ensure_ascii=False,
+            )
+        logger.info(f"📄 設定のコピーを作成しました: {copied_config_file}")
+
         await generate_job(
             sd_model_checkpoint=job.sd_model_checkpoint,
             sd_vae=job.sd_vae,
@@ -198,18 +212,9 @@ async def run_batch_from_yaml(config_file: Path, base_output_dir: Path) -> None:
 
     config = Config.model_validate(config_dict)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_dir = base_output_dir / timestamp
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # YAMLファイルを出力先にコピー
-    copied_config_file = output_dir / "config.yml"
-    shutil.copy(config_file, copied_config_file)
-    logger.info(f"📄 YAML設定ファイルをコピーしました: {copied_config_file}")
-
     await run_batch_from_config(
         config=config,
-        output_dir=output_dir,
+        base_output_dir=base_output_dir,
     )
 
 
