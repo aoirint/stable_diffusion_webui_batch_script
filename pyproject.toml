@@ -1,0 +1,7 @@
+[project]
+name = "stable-diffusion-webui-batch-script"
+version = "0.0.0"
+description = "Batch generation script for Stable Diffusion WebUI"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
