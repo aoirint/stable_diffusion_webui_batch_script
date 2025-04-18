@@ -186,6 +186,7 @@ async def run_batch_from_config(config: Config, base_output_dir: Path) -> None:
                 job.model_dump(),
                 fp,
                 ensure_ascii=False,
+                separators=(",", ":"),
             )
         logger.info(f"📄 設定のコピーを作成しました: {copied_config_file}")
 
